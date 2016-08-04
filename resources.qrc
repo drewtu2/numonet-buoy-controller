@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/Resources">
+        <file>Images/application-exit.png</file>
+        <file>Images/clear.png</file>
+        <file>Images/connect.png</file>
+        <file>Images/disconnect.png</file>
+        <file>Images/NUMONET_Logo.jpg</file>
+        <file>Images/settings.png</file>
+        <file>Images/Modem.icns</file>
+    </qresource>
+</RCC>
