@@ -92,7 +92,8 @@ private slots:
 private:
     void showStatusMessage(const QString &message);
     void initActionsConnections();
-    void delay(int secs);
+    void sdelay(int secs);
+    void mdelay(int secs);
     void setRemoteAddr(int index);
     void setIndicator(int RelayNum, bool status);
     void updateIndicators();

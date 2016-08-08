@@ -48,46 +48,39 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow){
-    ui->setupUi(this); //Create UI object
+    ui->setupUi(this);
     QPixmap logo(":/Resources/Images/NUMONET_Logo.jpg");
-    ui->Logo->setPixmap(logo);  //Set GUI Logo
+    ui->Logo->setPixmap(logo);
 
-    //Set Central Widget to the Main Widget (Our Controller)
+    // Set Central Widget to the Main Widget (Our Controller)
     setCentralWidget(ui->MainWidget);
 
-    //Create Xbee selector (via Combo box)
+    // Create Xbee selector (via Combo box)
     ui->RemoteXbeeSelector->addItem("Mercury");
     ui->RemoteXbeeSelector->addItem("Venus");
-    ui->RemoteXbeeSelector->setCurrentText("Venus"); //Default to Venus for now
+    ui->RemoteXbeeSelector->setCurrentText("Venus"); // Default to Venus for now
 
-    //Create Console Widget and attach to dock
+    // Create Console Widget and attach to dock
     console = new Console;
     console->setEnabled(false);
     ui->ConsoleWidget->addWidget(console);
 
-    //Set Menu Bar Actions
+    // Set Menu Bar Actions
     ui->actionConnect->setEnabled(true);
     ui->actionDisconnect->setEnabled(false);
     ui->actionQuit->setEnabled(true);
     ui->actionConfigure->setEnabled(true);
 
-    //Create SerialPort and link to Xbee
+    // Create SerialPort and link to Xbee
     serial = new QSerialPort(this);
     settings = new SettingsDialog;
     localXbee = new Xbee(serial);
 
-    //Create Label
+    // Create Label
     status = new QLabel;
     ui->statusBar->addWidget(status);
 
     initActionsConnections();
-
-    //Signals/Slots
-    connect(serial, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
-            this, &MainWindow::handleError);
-    connect(serial, &QSerialPort::readyRead, this, &MainWindow::readData); //As data come FROM serial port, DISPLAY on Console
-    connect(console, &Console::getData, this, &MainWindow::writeData); //As data comes from console, write to serial
-    /**************************/
 
     console->putData("GUI", 1);
 }
@@ -174,13 +167,16 @@ void MainWindow::writeData(const QByteArray &data)
  */
 QByteArray MainWindow::readData()
 {
-    QByteArray data = serial->readAll();
-    qDebug() <<"Incoming Hex Data: " << data.toHex() << endl;
-    qDebug() <<"Data Length: " << data.length() << endl;
-    qDebug() <<"Data (Raw): " << data << endl;
-    console->putData(data.toHex() + "\n");
-
-    return data;
+    if (ui->LocalTransparent) {
+        QByteArray data = serial->readAll();
+        qDebug() <<"Incoming Hex Data: " << data.toHex() << endl;
+        qDebug() <<"Data Length: " << data.length() << endl;
+        qDebug() <<"Data (Raw): " << data << endl;
+        console->putData(data.toHex() + "\n");
+        return data;
+    } else if (ui->LocalAPI) {
+        console->putData("API Command Response");
+    }
 }
 
 
@@ -209,6 +205,16 @@ void MainWindow::initActionsConnections()
     connect(ui->actionClear, &QAction::triggered, console, &Console::clear);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::about);
     connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
+    connect(serial, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+            this, &MainWindow::handleError);
+    // As data come FROM serial port, DISPLAY on Console
+    connect(serial, &QSerialPort::readyRead,
+            this, &MainWindow::readData);
+    // As data comes from console, write to serial
+    connect(console, &Console::getData,
+            this, &MainWindow::writeData);
+    /**************************/
+
 }
 
 /**
@@ -222,13 +228,25 @@ void MainWindow::showStatusMessage(const QString &message)
 }
 
 /**
- * @brief MainWindow::delay
+ * @brief MainWindow::sdelay
  * @param secs
  * Pauses proccesses all running proccesses for "secs" seconds.
  */
-void MainWindow::delay(int secs)
+void MainWindow::sdelay(int secs)
 {
     QTime dieTime= QTime::currentTime().addSecs(secs);
+    while (QTime::currentTime() < dieTime)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
+/**
+ * @brief MainWindow::mdelay
+ * @param secs
+ * Pauses proccesses all running proccesses for "secs" seconds.
+ */
+void MainWindow::mdelay(int msecs)
+{
+    QTime dieTime= QTime::currentTime().addMSecs(msecs);
     while (QTime::currentTime() < dieTime)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
@@ -246,7 +264,7 @@ void MainWindow::on_RemoteXbeeSelector_currentIndexChanged(int index)
     ui->RemoteAddress->setText(remoteAddr.toHex()); //Display what our current remote address is
 }
 
-//Toggled Relays
+// Toggled Relays
 void MainWindow::on_Relay1_toggled(bool checked)
 {
     int RelayNum = 1;
@@ -300,11 +318,11 @@ void MainWindow::setIndicator(int RelayNum, bool status){
     }
 }
     ;
-//Toggled API's
+// Toggled API's
 void MainWindow::on_LocalAPI_toggled(bool checked)
 {
     serial->write("+++");
-    delay(1);
+    mdelay(300);
     serial->write("ATAP");
 
     if(checked)
@@ -314,7 +332,7 @@ void MainWindow::on_LocalAPI_toggled(bool checked)
 
     serial->write("ATWR\r");
     serial->write("ATCN\r");
-    delay(1);
+    mdelay(300);
     console->putData("LocalAPI", checked);
 }
 
