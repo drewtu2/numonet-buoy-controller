@@ -69,6 +69,7 @@ public:
 private slots:
     void openSerialPort();
     void closeSerialPort();
+    void updateAddressBook();
     void about();
     void writeData(const QByteArray &data);
     QByteArray readData();
@@ -100,18 +101,17 @@ private:
     void setRemoteAddr(QString name);
     void setIndicator(int RelayNum, bool status);
     void updateIndicators();
+    void updateXbeeSelector();
+    void setPath();
 
-    //Addresses
-    char addreses[2][8] = {
-        {0x00, 0x13, char(0xA2), 0x00, 0x41, 0x02, char(0xFF), char(0xD4)}, //Mercury
-        {0x00, 0x13, char(0xA2), 0x00, 0x41, 0x03, char(0x00), char(0xBE)}   //Venus
-    };
+
     QByteArray remoteAddr;
     Ui::MainWindow *ui;
     QLabel *status;
     SettingsDialog *settings;
     QSerialPort *serial;
     Xbee *localXbee;
+    QString path;
 };
 
 #endif // MAINWINDOW_H

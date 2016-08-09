@@ -34,3 +34,7 @@ void AddressBook::Print() {
         qDebug() << "Address: " << it->xbee_address_;
     }
 }
+
+void AddressBook::clear() {
+    book.erase(book.begin(), book.end());
+}

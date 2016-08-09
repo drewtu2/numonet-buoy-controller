@@ -7,5 +7,6 @@
         <file>Images/NUMONET_Logo.jpg</file>
         <file>Images/settings.png</file>
         <file>Images/Modem.icns</file>
+        <file>address_file.txt</file>
     </qresource>
 </RCC>

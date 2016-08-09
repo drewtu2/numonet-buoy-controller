@@ -38,7 +38,6 @@
 #include <QLabel>
 #include <QPixmap>
 #include <QFile>
-#include <QDir>
 #include <QTextStream>
 #include <QDebug>
 
@@ -57,13 +56,13 @@ MainWindow::MainWindow(QWidget *parent) :
     // Set Central Widget to the Main Widget (Our Controller)
     setCentralWidget(ui->MainWidget);
 
-    address_book = new AddressBook;
-    loadRemoteAddr();
+    // Create SerialPort and link to Xbee
+    serial = new QSerialPort(this);
+    settings = new SettingsDialog;
+    localXbee = new Xbee(serial);
 
-    // Create Xbee selector (via Combo box)
-    for (int i = 0; i < address_book->GetSize(); i++){
-        ui->RemoteXbeeSelector->addItem(address_book->GetName(i));
-    }
+    address_book = new AddressBook;
+    updateAddressBook();
     ui->RemoteXbeeSelector->setCurrentText("Venus"); // Default to Venus for now
 
     // Create Console Widget and attach to dock
@@ -76,11 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->actionDisconnect->setEnabled(false);
     ui->actionQuit->setEnabled(true);
     ui->actionConfigure->setEnabled(true);
-
-    // Create SerialPort and link to Xbee
-    serial = new QSerialPort(this);
-    settings = new SettingsDialog;
-    localXbee = new Xbee(serial);
 
     // Create Label
     status = new QLabel;
@@ -211,6 +205,7 @@ void MainWindow::initActionsConnections()
     connect(ui->actionClear, &QAction::triggered, console, &Console::clear);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::about);
     connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
+    connect(settings, &SettingsDialog::settingsApplied, this, &MainWindow::updateAddressBook);
     connect(serial, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
             this, &MainWindow::handleError);
     // As data come FROM serial port, DISPLAY on Console
@@ -221,6 +216,24 @@ void MainWindow::initActionsConnections()
             this, &MainWindow::writeData);
     /**************************/
 
+}
+
+void MainWindow::updateAddressBook(){
+    setPath();
+    loadRemoteAddr();
+    updateXbeeSelector();
+}
+
+void MainWindow::updateXbeeSelector() {
+    // Create Xbee selector (via Combo box)
+    qDebug() << ui->RemoteXbeeSelector->count();
+    for (int i = 0; i <= ui->RemoteXbeeSelector->count(); i++){
+        ui->RemoteXbeeSelector->removeItem(0);
+    }
+    qDebug() << address_book->GetSize();
+    for (int i = 0; i < address_book->GetSize(); i++){
+        ui->RemoteXbeeSelector->addItem(address_book->GetName(i));
+    }
 }
 
 /**
@@ -256,13 +269,18 @@ void MainWindow::mdelay(int msecs) {
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
 
+void MainWindow::setPath(){
+    qDebug() << "Updated path";
+    path = settings->address_path_;
+}
+
 void MainWindow::loadRemoteAddr() {
-    QString path = "/Users/Andrew/Dropbox/Northeastern/Research/NU MONET (Personal)/NU MONET/Undergraduate Research/GUI Testing/address_file.txt";
     QFile address_file(path);
     if (!address_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Error: Unable to open file";
         return;
     }
+    address_book->clear();
     QTextStream in(&address_file);
     while (!in.atEnd()) {
          QString line = in.readLine();

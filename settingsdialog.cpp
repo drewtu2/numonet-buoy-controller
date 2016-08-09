@@ -38,6 +38,7 @@
 #include <QtSerialPort/QSerialPortInfo>
 #include <QIntValidator>
 #include <QLineEdit>
+#include <QFileDialog>
 
 QT_USE_NAMESPACE
 
@@ -95,6 +96,7 @@ void SettingsDialog::showPortInfo(int idx)
 void SettingsDialog::apply()
 {
     updateSettings();
+    emit settingsApplied();
     hide();
 }
 
@@ -171,6 +173,7 @@ void SettingsDialog::fillPortsInfo()
     }
 
     ui->serialPortInfoListBox->addItem(tr("Custom"));
+    ui->path->setText(address_path_);
 }
 
 void SettingsDialog::updateSettings()
@@ -202,4 +205,12 @@ void SettingsDialog::updateSettings()
     currentSettings.stringFlowControl = ui->flowControlBox->currentText();
 
     currentSettings.localEchoEnabled = ui->localEchoCheckBox->isChecked();
+
+    address_path_ = ui->path->text();
+}
+
+void SettingsDialog::on_pathSelectButton_clicked()
+{
+    ui->path->setText(QFileDialog::getOpenFileName(this, "Select Address File", ui->path->text()));
+
 }

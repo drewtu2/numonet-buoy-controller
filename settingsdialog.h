@@ -73,13 +73,19 @@ public:
     explicit SettingsDialog(QWidget *parent = 0);
     ~SettingsDialog();
 
+    //Default address file
+    QString address_path_ = ":/Resources/address_file.txt";
     Settings settings() const;
 
+signals:
+    void settingsApplied();
 private slots:
     void showPortInfo(int idx);
     void apply();
     void checkCustomBaudRatePolicy(int idx);
     void checkCustomDevicePathPolicy(int idx);
+
+    void on_pathSelectButton_clicked();
 
 private:
     void fillPortsParameters();

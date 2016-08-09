@@ -22,6 +22,7 @@ public:
     QString GetName(int index);
     int GetSize();
     void Print();
+    void clear();
 };
 #endif // ADDRESSBOOK_H
 
