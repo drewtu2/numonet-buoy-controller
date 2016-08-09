@@ -12,10 +12,11 @@ struct Entry {
 };
 
 class AddressBook {
-    std::vector<Entry> address_book;
+
 
 public:
-    AddressBook(QStringList line);
+    std::vector<Entry> book;
+    AddressBook();
     void Add(QStringList line);
     QByteArray Get(QString name);
     void Print();

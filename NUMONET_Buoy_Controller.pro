@@ -10,13 +10,15 @@ SOURCES += \
     mainwindow.cpp \
     settingsdialog.cpp \
     console.cpp \
-    xbee.cpp
+    xbee.cpp \
+    addressbook.cpp
 
 HEADERS += \
     mainwindow.h \
     settingsdialog.h \
     console.h \
-    xbee.h
+    xbee.h \
+    addressbook.h
 
 FORMS += \
     mainwindow.ui \

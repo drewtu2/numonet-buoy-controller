@@ -32,18 +32,20 @@
 **
 ****************************************************************************/
 
-#include <QMessageBox>
-#include <QLabel>
-#include <QtSerialPort/QSerialPort>
-#include <QPixmap>
 #include <string>
 #include <iostream>
+#include <QMessageBox>
+#include <QLabel>
+#include <QPixmap>
+#include <QFile>
+#include <QDir>
+#include <QTextStream>
+#include <QDebug>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "console.h"
 #include "settingsdialog.h"
-#include "xbee.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -54,6 +56,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Set Central Widget to the Main Widget (Our Controller)
     setCentralWidget(ui->MainWidget);
+
+    address_book = new AddressBook;
+    loadRemoteAddr();
 
     // Create Xbee selector (via Combo box)
     ui->RemoteXbeeSelector->addItem("Mercury");
@@ -81,7 +86,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->statusBar->addWidget(status);
 
     initActionsConnections();
-
     console->putData("GUI", 1);
 }
 /**
@@ -176,6 +180,7 @@ QByteArray MainWindow::readData()
         return data;
     } else if (ui->LocalAPI) {
         console->putData("API Command Response");
+        return NULL;
     }
 }
 
@@ -244,25 +249,38 @@ void MainWindow::sdelay(int secs)
  * @param secs
  * Pauses proccesses all running proccesses for "secs" seconds.
  */
-void MainWindow::mdelay(int msecs)
-{
+void MainWindow::mdelay(int msecs) {
     QTime dieTime= QTime::currentTime().addMSecs(msecs);
     while (QTime::currentTime() < dieTime)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
 
-void MainWindow::setRemoteAddr(int index)
-{
-    remoteAddr.clear();
-    remoteAddr.append(addreses[index],sizeof(addreses[index]));
-//    qDebug() <<"remoteAddr from setRemoteAddr(): " << remoteAddr << endl;
+void MainWindow::loadRemoteAddr() {
+    QString path = "/Users/Andrew/Dropbox/Northeastern/Research/NU MONET (Personal)/NU MONET/Undergraduate Research/GUI Testing/address_file.txt";
+    QFile address_file(path);
+    if (!address_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        qDebug() << "Error: Unable to open file";
+        return;
+    }
+    QTextStream in(&address_file);
+    while (!in.atEnd()) {
+         QString line = in.readLine();
+         address_book->Add(line.split(' '));
+    }
+    address_file.close();
+
 }
 
-void MainWindow::on_RemoteXbeeSelector_currentIndexChanged(int index)
-{
-    setRemoteAddr(index);   //Set the current remote address
-    ui->RemoteAddress->setText(remoteAddr.toHex()); //Display what our current remote address is
+void MainWindow::setRemoteAddr(QString name) {
+    remoteAddr = address_book->Get(name);
 }
+
+void MainWindow::on_RemoteXbeeSelector_currentTextChanged(const QString &arg1)
+{
+    setRemoteAddr(arg1);
+    ui->RemoteAddress->setText(address_book->Get(arg1)); //Display what our current remote address is
+}
+
 
 // Toggled Relays
 void MainWindow::on_Relay1_toggled(bool checked)
@@ -371,3 +389,4 @@ void MainWindow::updateIndicators()
 //    setIndicator(3, bool(data[7]-'0'));
 //    setIndicator(4, bool(data[9]-'0'));
 }
+

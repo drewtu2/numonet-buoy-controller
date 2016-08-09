@@ -38,9 +38,9 @@
 #include <QtCore/QtGlobal>
 #include <QMainWindow>
 #include <QtSerialPort/QSerialPort>
-#include <QDebug>
 
 #include "xbee.h"
+#include "addressbook.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -62,6 +62,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     Console *console;
+    AddressBook *address_book;
     ~MainWindow();
 
 
@@ -82,19 +83,21 @@ private slots:
     void on_LocalAPI_toggled(bool checked);
     void on_RemoteAPI_toggled(bool checked);
 
-
     void on_SleepButton_toggled(bool checked);
 
-    void on_RemoteXbeeSelector_currentIndexChanged(int index);
+    void on_RemoteXbeeSelector_currentTextChanged(const QString &arg1);
 
     void on_RefreshButton_clicked();
+
+
 
 private:
     void showStatusMessage(const QString &message);
     void initActionsConnections();
+    void loadRemoteAddr();
     void sdelay(int secs);
     void mdelay(int secs);
-    void setRemoteAddr(int index);
+    void setRemoteAddr(QString name);
     void setIndicator(int RelayNum, bool status);
     void updateIndicators();
 
