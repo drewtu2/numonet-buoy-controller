@@ -61,8 +61,9 @@ MainWindow::MainWindow(QWidget *parent) :
     loadRemoteAddr();
 
     // Create Xbee selector (via Combo box)
-    ui->RemoteXbeeSelector->addItem("Mercury");
-    ui->RemoteXbeeSelector->addItem("Venus");
+    for (int i = 0; i < address_book->GetSize(); i++){
+        ui->RemoteXbeeSelector->addItem(address_book->GetName(i));
+    }
     ui->RemoteXbeeSelector->setCurrentText("Venus"); // Default to Venus for now
 
     // Create Console Widget and attach to dock
@@ -272,13 +273,13 @@ void MainWindow::loadRemoteAddr() {
 }
 
 void MainWindow::setRemoteAddr(QString name) {
-    remoteAddr = address_book->Get(name);
+    remoteAddr = address_book->GetAddress(name);
 }
 
 void MainWindow::on_RemoteXbeeSelector_currentTextChanged(const QString &arg1)
 {
     setRemoteAddr(arg1);
-    ui->RemoteAddress->setText(address_book->Get(arg1)); //Display what our current remote address is
+    ui->RemoteAddress->setText(address_book->GetAddress(arg1).toHex()); //Display what our current remote address is
 }
 
 

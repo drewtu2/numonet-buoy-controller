@@ -11,13 +11,21 @@ void AddressBook::Add(QStringList line) {
     AddressBook::book[size - 1].xbee_address_ = QByteArray::fromHex(line.at(1).toLatin1());
 }
 
-QByteArray AddressBook::Get(QString name) {
+QByteArray AddressBook::GetAddress(QString name) {
     for (std::vector<Entry>::iterator it = AddressBook::book.begin(); it != AddressBook::book.end(); ++it) {
         if (it->xbee_name_ == name) {
             return it->xbee_address_;
         }
     }
     return NULL;
+}
+
+QString AddressBook::GetName(int index) {
+    return AddressBook::book[index].xbee_name_;
+}
+
+int AddressBook::GetSize() {
+    return AddressBook::book.size();
 }
 
 void AddressBook::Print() {

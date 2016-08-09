@@ -18,7 +18,9 @@ public:
     std::vector<Entry> book;
     AddressBook();
     void Add(QStringList line);
-    QByteArray Get(QString name);
+    QByteArray GetAddress(QString name);
+    QString GetName(int index);
+    int GetSize();
     void Print();
 };
 #endif // ADDRESSBOOK_H
