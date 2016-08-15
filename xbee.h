@@ -9,7 +9,7 @@
 
 class Xbee
 {
-    QSerialPort *XbeeSerial;
+    QSerialPort *xbeeSerial;
     QString name;
 
 public:
@@ -24,8 +24,6 @@ private:
     void remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int parameter);
     void remoteATcommand(QByteArray remAddr, QByteArray ATCommand);
 private slots:
-    //void openSerialPort();
-    //void closeSerialPort();
 
 };
 

@@ -1,18 +1,21 @@
 #include "addressbook.h"
 
-AddressBook::AddressBook() {
+AddressBook::AddressBook()
+{
     //Constructor
 }
 
-void AddressBook::Add(QStringList line) {
-    AddressBook::book.push_back(Entry());
-    int size = AddressBook::book.size();
-    AddressBook::book[size - 1].xbee_name_ = line.at(0);
-    AddressBook::book[size - 1].xbee_address_ = QByteArray::fromHex(line.at(1).toLatin1());
+void AddressBook::add(QStringList line)
+{
+    AddressBook::book_.push_back(Entry());
+    int size = AddressBook::book_.size();
+    AddressBook::book_[size - 1].xbee_name_ = line.at(0);
+    AddressBook::book_[size - 1].xbee_address_ = QByteArray::fromHex(line.at(1).toLatin1());
 }
 
-QByteArray AddressBook::GetAddress(QString name) {
-    for (std::vector<Entry>::iterator it = AddressBook::book.begin(); it != AddressBook::book.end(); ++it) {
+QByteArray AddressBook::getAddress(QString name)
+{
+    for (std::vector<Entry>::iterator it = AddressBook::book_.begin(); it != AddressBook::book_.end(); ++it) {
         if (it->xbee_name_ == name) {
             return it->xbee_address_;
         }
@@ -20,21 +23,24 @@ QByteArray AddressBook::GetAddress(QString name) {
     return NULL;
 }
 
-QString AddressBook::GetName(int index) {
-    return AddressBook::book[index].xbee_name_;
+QString AddressBook::getName(int index)
+{
+    return AddressBook::book_[index].xbee_name_;
 }
 
-int AddressBook::GetSize() {
-    return AddressBook::book.size();
+int AddressBook::getSize()
+{
+    return AddressBook::book_.size();
 }
 
-void AddressBook::Print() {
-    for (std::vector<Entry>::iterator it = AddressBook::book.begin(); it != AddressBook::book.end(); ++it) {
+void AddressBook::print()
+{
+    for (std::vector<Entry>::iterator it = AddressBook::book_.begin(); it != AddressBook::book_.end(); ++it) {
         qDebug() << "Name: " << it->xbee_name_;
         qDebug() << "Address: " << it->xbee_address_;
     }
 }
 
 void AddressBook::clear() {
-    book.erase(book.begin(), book.end());
+    book_.erase(book_.begin(), book_.end());
 }

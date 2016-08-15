@@ -218,21 +218,23 @@ void MainWindow::initActionsConnections()
 
 }
 
-void MainWindow::updateAddressBook(){
+void MainWindow::updateAddressBook()
+{
     setPath();
     loadRemoteAddr();
     updateXbeeSelector();
 }
 
-void MainWindow::updateXbeeSelector() {
+void MainWindow::updateXbeeSelector()
+{
     // Create Xbee selector (via Combo box)
     qDebug() << ui->RemoteXbeeSelector->count();
     for (int i = 0; i <= ui->RemoteXbeeSelector->count(); i++){
         ui->RemoteXbeeSelector->removeItem(0);
     }
-    qDebug() << address_book->GetSize();
-    for (int i = 0; i < address_book->GetSize(); i++){
-        ui->RemoteXbeeSelector->addItem(address_book->GetName(i));
+    qDebug() << address_book->getSize();
+    for (int i = 0; i < address_book->getSize(); i++){
+        ui->RemoteXbeeSelector->addItem(address_book->getName(i));
     }
 }
 
@@ -263,18 +265,21 @@ void MainWindow::sdelay(int secs)
  * @param secs
  * Pauses proccesses all running proccesses for "secs" seconds.
  */
-void MainWindow::mdelay(int msecs) {
+void MainWindow::mdelay(int msecs)
+{
     QTime dieTime= QTime::currentTime().addMSecs(msecs);
     while (QTime::currentTime() < dieTime)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
 
-void MainWindow::setPath(){
+void MainWindow::setPath()
+{
     qDebug() << "Updated path";
     path = settings->address_path_;
 }
 
-void MainWindow::loadRemoteAddr() {
+void MainWindow::loadRemoteAddr()
+{
     QFile address_file(path);
     if (!address_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Error: Unable to open file";
@@ -284,20 +289,21 @@ void MainWindow::loadRemoteAddr() {
     QTextStream in(&address_file);
     while (!in.atEnd()) {
          QString line = in.readLine();
-         address_book->Add(line.split(' '));
+         address_book->add(line.split(' '));
     }
     address_file.close();
 
 }
 
-void MainWindow::setRemoteAddr(QString name) {
-    remoteAddr = address_book->GetAddress(name);
+void MainWindow::setRemoteAddr(QString name)
+{
+    remoteAddr = address_book->getAddress(name);
 }
 
 void MainWindow::on_RemoteXbeeSelector_currentTextChanged(const QString &arg1)
 {
     setRemoteAddr(arg1);
-    ui->RemoteAddress->setText(address_book->GetAddress(arg1).toHex()); //Display what our current remote address is
+    ui->RemoteAddress->setText(address_book->getAddress(arg1).toHex()); //Display what our current remote address is
 }
 
 
@@ -333,7 +339,8 @@ void MainWindow::on_Relay4_toggled(bool checked)
     setIndicator(RelayNum, checked);
     console->putData("Relay", RelayNum, checked);
 }
-void MainWindow::setIndicator(int RelayNum, bool status){
+void MainWindow::setIndicator(int RelayNum, bool status)
+{
 
     QString color = "green";
     if(status == 0) color = "red";

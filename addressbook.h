@@ -13,15 +13,14 @@ struct Entry {
 
 class AddressBook {
 
-
 public:
-    std::vector<Entry> book;
+    std::vector<Entry> book_;
     AddressBook();
-    void Add(QStringList line);
-    QByteArray GetAddress(QString name);
-    QString GetName(int index);
-    int GetSize();
-    void Print();
+    QByteArray getAddress(QString name);
+    QString getName(int index);
+    int getSize();
+    void add(QStringList line);
+    void print();
     void clear();
 };
 #endif // ADDRESSBOOK_H

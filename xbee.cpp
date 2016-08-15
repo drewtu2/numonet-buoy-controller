@@ -8,7 +8,7 @@
  */
 Xbee::Xbee(QSerialPort *portInput)
 {
-    XbeeSerial = portInput;
+    xbeeSerial = portInput;
 }
 
 /**
@@ -98,7 +98,7 @@ void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int paramet
     num[19] = checkSum(num.mid(3));
 
     //Write the command
-    XbeeSerial->write(num);
+    xbeeSerial->write(num);
     qDebug() << num << "\n";
 }
 
@@ -122,7 +122,7 @@ void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
     num[18] = checkSum(num.mid(3));
 
     //Write the command
-    XbeeSerial->write(num);
+    xbeeSerial->write(num);
     qDebug() << num.toHex() << "\n";
 }
 
