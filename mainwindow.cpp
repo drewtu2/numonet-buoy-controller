@@ -31,20 +31,15 @@
 ** $QT_END_LICENSE$
 **
 ****************************************************************************/
+#include "mainwindow.h"
 
 #include <string>
-#include <iostream>
 #include <QMessageBox>
 #include <QLabel>
 #include <QPixmap>
 #include <QFile>
 #include <QTextStream>
 #include <QDebug>
-
-#include "mainwindow.h"
-#include "ui_mainwindow.h"
-#include "console.h"
-#include "settingsdialog.h"
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -56,10 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :
     // Set Central Widget to the Main Widget (Our Controller)
     setCentralWidget(ui->MainWidget);
 
-    // Create SerialPort and link to Xbee
-    serial = new QSerialPort(this);
+    // Create Xbee and Serial Settings
     settings = new SettingsDialog;
-    localXbee = new Xbee(serial);
+    localXbee = new Xbee(this);
 
     address_book = new AddressBook;
     updateAddressBook();
@@ -111,26 +105,27 @@ void MainWindow::about()
 void MainWindow::openSerialPort()
 {
     SettingsDialog::Settings p = settings->settings();
-    serial->setPortName(p.name);
-    serial->setBaudRate(p.baudRate);
-    serial->setDataBits(p.dataBits);
-    serial->setParity(p.parity);
-    serial->setStopBits(p.stopBits);
-    serial->setFlowControl(p.flowControl);
+    localXbee->setPortName(p.name);
+    localXbee->setBaudRate(p.baudRate);
+    localXbee->setDataBits(p.dataBits);
+    localXbee->setParity(p.parity);
+    localXbee->setStopBits(p.stopBits);
+    localXbee->setFlowControl(p.flowControl);
 
-    if (serial->open(QIODevice::ReadWrite)) {
+    if (localXbee->open(QIODevice::ReadWrite)) {
         console->setEnabled(true);
         console->setLocalEchoEnabled(p.localEchoEnabled);
         ui->actionConnect->setEnabled(false);
         ui->actionDisconnect->setEnabled(true);
         ui->actionConfigure->setEnabled(false);
         console->putData("SerialPort", 1);
+        qDebug() << "Connected to Serial Port";
         showStatusMessage(tr("Connected to %1 : %2, %3, %4, %5, %6")
                           .arg(p.name).arg(p.stringBaudRate).arg(p.stringDataBits)
                           .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
     }
     else {
-        QMessageBox::critical(this, tr("Error"), serial->errorString());
+        QMessageBox::critical(this, tr("Error"), localXbee->errorString());
         showStatusMessage(tr("Open error"));
     }
 }
@@ -140,8 +135,8 @@ void MainWindow::openSerialPort()
  */
 void MainWindow::closeSerialPort()
 {
-    if (serial->isOpen())
-        serial->close();
+    if (localXbee->isOpen())
+        localXbee->close();
     console->setEnabled(false);
     ui->actionConnect->setEnabled(true);
     ui->actionDisconnect->setEnabled(false);
@@ -157,7 +152,7 @@ void MainWindow::closeSerialPort()
  */
 void MainWindow::writeData(const QByteArray &data)
 {
-    serial->write(data);
+    localXbee->write(data);
 }
 
 /**
@@ -166,15 +161,17 @@ void MainWindow::writeData(const QByteArray &data)
  */
 QByteArray MainWindow::readData()
 {
-    if (ui->LocalTransparent) {
-        QByteArray data = serial->readAll();
+    if (ui->LocalTransparent->isChecked()) {
+        QByteArray data = localXbee->readAll();
         qDebug() <<"Incoming Hex Data: " << data.toHex() << endl;
-        qDebug() <<"Data Length: " << data.length() << endl;
         qDebug() <<"Data (Raw): " << data << endl;
+        qDebug() <<"Data Length: " << data.length() << endl;
         console->putData(data.toHex() + "\n");
         return data;
-    } else if (ui->LocalAPI) {
-        console->putData("API Command Response");
+    } else if (ui->LocalAPI->isChecked()) {
+        console->putData("API Command Response\n");
+        return NULL;
+    } else {
         return NULL;
     }
 }
@@ -188,7 +185,7 @@ QByteArray MainWindow::readData()
 void MainWindow::handleError(QSerialPort::SerialPortError error)
 {
     if (error == QSerialPort::ResourceError) {
-        QMessageBox::critical(this, tr("Critical Error"), serial->errorString());
+        QMessageBox::critical(this, tr("Critical Error"), localXbee->errorString());
         closeSerialPort();
     }
 }
@@ -206,12 +203,12 @@ void MainWindow::initActionsConnections()
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::about);
     connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
     connect(settings, &SettingsDialog::settingsApplied, this, &MainWindow::updateAddressBook);
-    connect(serial, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+    connect(localXbee, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
             this, &MainWindow::handleError);
     // As data come FROM serial port, DISPLAY on Console
-    connect(serial, &QSerialPort::readyRead,
+    connect(localXbee, &QSerialPort::readyRead,
             this, &MainWindow::readData);
-    // As data comes from console, write to serial
+    // As data comes from console, write to localXbee
     connect(console, &Console::getData,
             this, &MainWindow::writeData);
     /**************************/
@@ -220,7 +217,7 @@ void MainWindow::initActionsConnections()
 
 void MainWindow::updateAddressBook()
 {
-    setPath();
+    setPathToAddressBook();
     loadRemoteAddr();
     updateXbeeSelector();
 }
@@ -228,11 +225,11 @@ void MainWindow::updateAddressBook()
 void MainWindow::updateXbeeSelector()
 {
     // Create Xbee selector (via Combo box)
-    qDebug() << ui->RemoteXbeeSelector->count();
+    //qDebug() << ui->RemoteXbeeSelector->count();
     for (int i = 0; i <= ui->RemoteXbeeSelector->count(); i++){
         ui->RemoteXbeeSelector->removeItem(0);
     }
-    qDebug() << address_book->getSize();
+    //qDebug() << address_book->getSize();
     for (int i = 0; i < address_book->getSize(); i++){
         ui->RemoteXbeeSelector->addItem(address_book->getName(i));
     }
@@ -272,15 +269,15 @@ void MainWindow::mdelay(int msecs)
         QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
 
-void MainWindow::setPath()
+void MainWindow::setPathToAddressBook()
 {
-    qDebug() << "Updated path";
-    path = settings->address_path_;
+    qDebug() << "Updated pathToAddressBook";
+    pathToAddressBook = settings->address_path_;
 }
 
 void MainWindow::loadRemoteAddr()
 {
-    QFile address_file(path);
+    QFile address_file(pathToAddressBook);
     if (!address_file.open(QIODevice::ReadOnly | QIODevice::Text)) {
         qDebug() << "Error: Unable to open file";
         return;
@@ -365,17 +362,17 @@ void MainWindow::setIndicator(int RelayNum, bool status)
 // Toggled API's
 void MainWindow::on_LocalAPI_toggled(bool checked)
 {
-    serial->write("+++");
+    localXbee->write("+++");
     mdelay(300);
-    serial->write("ATAP");
+    localXbee->write("ATAP");
 
     if(checked)
-        serial->write("1\r");
+        localXbee->write("1\r");
     else
-        serial->write("0\r");
+        localXbee->write("0\r");
 
-    serial->write("ATWR\r");
-    serial->write("ATCN\r");
+    localXbee->write("ATWR\r");
+    localXbee->write("ATCN\r");
     mdelay(300);
     console->putData("LocalAPI", checked);
 }
@@ -401,7 +398,7 @@ void MainWindow::on_RefreshButton_clicked()
 
 void MainWindow::updateIndicators()
 {
-    //serial->clear();
+//    localXbee->clear();
 //    qDebug() << "Update Indicators";
 //    localXbee->getRemoteRelay(remoteAddr, 1);
 //    localXbee->getRemoteRelay(remoteAddr, 2);

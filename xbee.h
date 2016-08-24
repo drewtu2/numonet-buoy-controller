@@ -7,13 +7,12 @@
 #include <QDebug>
 #include "settingsdialog.h"
 
-class Xbee
+class Xbee : public QSerialPort
 {
-    QSerialPort *xbeeSerial;
     QString name;
 
 public:
-    Xbee(QSerialPort *portInput);
+    Xbee(QObject *parent = Q_NULLPTR);
     void setRemoteRelay(QByteArray remAddr, int relay, int status);
     void setRemoteAPI(QByteArray remAddr, bool checked);
     void setSleep(QByteArray remAddr, bool sleep);
@@ -23,6 +22,7 @@ private:
     int checkSum(QByteArray messageBody);
     void remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int parameter);
     void remoteATcommand(QByteArray remAddr, QByteArray ATCommand);
+
 private slots:
 
 };

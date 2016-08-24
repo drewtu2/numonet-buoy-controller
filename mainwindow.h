@@ -35,12 +35,14 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "xbee.h"
+#include "addressbook.h"
+#include "console.h"
+#include "ui_mainwindow.h"
+
 #include <QtCore/QtGlobal>
 #include <QMainWindow>
 #include <QtSerialPort/QSerialPort>
-
-#include "xbee.h"
-#include "addressbook.h"
 
 QT_BEGIN_NAMESPACE
 
@@ -102,16 +104,15 @@ private:
     void setIndicator(int RelayNum, bool status);
     void updateIndicators();
     void updateXbeeSelector();
-    void setPath();
+    void setPathToAddressBook();
 
 
     QByteArray remoteAddr;
     Ui::MainWindow *ui;
     QLabel *status;
     SettingsDialog *settings;
-    QSerialPort *serial;
     Xbee *localXbee;
-    QString path;
+    QString pathToAddressBook;
 };
 
 #endif // MAINWINDOW_H

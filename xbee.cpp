@@ -6,9 +6,9 @@
  * @brief Xbee::Xbee * Initialize the Xbee with the proper serial port connection opened through the console application
  * @param portInput
  */
-Xbee::Xbee(QSerialPort *portInput)
+Xbee::Xbee(QObject *parent) : QSerialPort(parent)
 {
-    xbeeSerial = portInput;
+
 }
 
 /**
@@ -77,6 +77,7 @@ void Xbee::setRemoteAPI(QByteArray remAddr, bool checked)
     remoteATcommand(remAddr, command ,parameter);
 }
 
+
 void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int parameter)
 {
     QByteArray num;
@@ -98,8 +99,8 @@ void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int paramet
     num[19] = checkSum(num.mid(3));
 
     //Write the command
-    xbeeSerial->write(num);
-    qDebug() << num << "\n";
+    write(num);
+    qDebug() << "Hex Cmd Sent: " << num << "\n";
 }
 
 void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
@@ -122,8 +123,8 @@ void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
     num[18] = checkSum(num.mid(3));
 
     //Write the command
-    xbeeSerial->write(num);
-    qDebug() << num.toHex() << "\n";
+    write(num);
+    qDebug() << "Hex Cmd Sent: " << num.toHex() << "\n";
 }
 
 int Xbee::checkSum(QByteArray messageBody)
