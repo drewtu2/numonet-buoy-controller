@@ -53,9 +53,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // Create Xbee and Serial Settings
     settings = new SettingsDialog;
-    localXbee = new Xbee(this);
+    //localXbee(this);
 
-    address_book = new AddressBook;
+    //address_book();
     updateAddressBook();
     ui->RemoteXbeeSelector->setCurrentText("Venus"); // Default to Venus for now
 
@@ -105,14 +105,14 @@ void MainWindow::about()
 void MainWindow::openSerialPort()
 {
     SettingsDialog::Settings p = settings->settings();
-    localXbee->setPortName(p.name);
-    localXbee->setBaudRate(p.baudRate);
-    localXbee->setDataBits(p.dataBits);
-    localXbee->setParity(p.parity);
-    localXbee->setStopBits(p.stopBits);
-    localXbee->setFlowControl(p.flowControl);
+    localXbee.setPortName(p.name);
+    localXbee.setBaudRate(p.baudRate);
+    localXbee.setDataBits(p.dataBits);
+    localXbee.setParity(p.parity);
+    localXbee.setStopBits(p.stopBits);
+    localXbee.setFlowControl(p.flowControl);
 
-    if (localXbee->open(QIODevice::ReadWrite)) {
+    if (localXbee.open(QIODevice::ReadWrite)) {
         console->setEnabled(true);
         console->setLocalEchoEnabled(p.localEchoEnabled);
         ui->actionConnect->setEnabled(false);
@@ -125,7 +125,7 @@ void MainWindow::openSerialPort()
                           .arg(p.stringParity).arg(p.stringStopBits).arg(p.stringFlowControl));
     }
     else {
-        QMessageBox::critical(this, tr("Error"), localXbee->errorString());
+        QMessageBox::critical(this, tr("Error"), localXbee.errorString());
         showStatusMessage(tr("Open error"));
     }
 }
@@ -135,8 +135,8 @@ void MainWindow::openSerialPort()
  */
 void MainWindow::closeSerialPort()
 {
-    if (localXbee->isOpen())
-        localXbee->close();
+    if (localXbee.isOpen())
+        localXbee.close();
     console->setEnabled(false);
     ui->actionConnect->setEnabled(true);
     ui->actionDisconnect->setEnabled(false);
@@ -152,7 +152,7 @@ void MainWindow::closeSerialPort()
  */
 void MainWindow::writeData(const QByteArray &data)
 {
-    localXbee->write(data);
+    localXbee.write(data);
 }
 
 /**
@@ -162,7 +162,7 @@ void MainWindow::writeData(const QByteArray &data)
 QByteArray MainWindow::readData()
 {
     if (ui->LocalTransparent->isChecked()) {
-        QByteArray data = localXbee->readAll();
+        QByteArray data = localXbee.readAll();
         qDebug() <<"Incoming Hex Data: " << data.toHex() << endl;
         qDebug() <<"Data (Raw): " << data << endl;
         qDebug() <<"Data Length: " << data.length() << endl;
@@ -185,7 +185,7 @@ QByteArray MainWindow::readData()
 void MainWindow::handleError(QSerialPort::SerialPortError error)
 {
     if (error == QSerialPort::ResourceError) {
-        QMessageBox::critical(this, tr("Critical Error"), localXbee->errorString());
+        QMessageBox::critical(this, tr("Critical Error"), localXbee.errorString());
         closeSerialPort();
     }
 }
@@ -203,10 +203,10 @@ void MainWindow::initActionsConnections()
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::about);
     connect(ui->actionAboutQt, &QAction::triggered, qApp, &QApplication::aboutQt);
     connect(settings, &SettingsDialog::settingsApplied, this, &MainWindow::updateAddressBook);
-    connect(localXbee, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
+    connect(&localXbee, static_cast<void (QSerialPort::*)(QSerialPort::SerialPortError)>(&QSerialPort::error),
             this, &MainWindow::handleError);
     // As data come FROM serial port, DISPLAY on Console
-    connect(localXbee, &QSerialPort::readyRead,
+    connect(&localXbee, &QSerialPort::readyRead,
             this, &MainWindow::readData);
     // As data comes from console, write to localXbee
     connect(console, &Console::getData,
@@ -229,9 +229,9 @@ void MainWindow::updateXbeeSelector()
     for (int i = 0; i <= ui->RemoteXbeeSelector->count(); i++){
         ui->RemoteXbeeSelector->removeItem(0);
     }
-    //qDebug() << address_book->getSize();
-    for (int i = 0; i < address_book->getSize(); i++){
-        ui->RemoteXbeeSelector->addItem(address_book->getName(i));
+    //qDebug() << address_book.getSize();
+    for (int i = 0; i < address_book.getSize(); i++){
+        ui->RemoteXbeeSelector->addItem(address_book.getName(i));
     }
 }
 
@@ -282,11 +282,11 @@ void MainWindow::loadRemoteAddr()
         qDebug() << "Error: Unable to open file";
         return;
     }
-    address_book->clear();
+    address_book.clear();
     QTextStream in(&address_file);
     while (!in.atEnd()) {
          QString line = in.readLine();
-         address_book->add(line.split(' '));
+         address_book.add(line.split(' '));
     }
     address_file.close();
 
@@ -294,13 +294,13 @@ void MainWindow::loadRemoteAddr()
 
 void MainWindow::setRemoteAddr(QString name)
 {
-    remoteAddr = address_book->getAddress(name);
+    remoteAddr = address_book.getAddress(name);
 }
 
 void MainWindow::on_RemoteXbeeSelector_currentTextChanged(const QString &arg1)
 {
     setRemoteAddr(arg1);
-    ui->RemoteAddress->setText(address_book->getAddress(arg1).toHex()); //Display what our current remote address is
+    ui->RemoteAddress->setText(address_book.getAddress(arg1).toHex()); //Display what our current remote address is
 }
 
 
@@ -308,7 +308,7 @@ void MainWindow::on_RemoteXbeeSelector_currentTextChanged(const QString &arg1)
 void MainWindow::on_Relay1_toggled(bool checked)
 {
     int RelayNum = 1;
-    localXbee->setRemoteRelay(remoteAddr, RelayNum, checked);
+    localXbee.setRemoteRelay(remoteAddr, RelayNum, checked);
     setIndicator(RelayNum, checked);
     console->putData("Relay", RelayNum, checked);
 }
@@ -316,7 +316,7 @@ void MainWindow::on_Relay1_toggled(bool checked)
 void MainWindow::on_Relay2_toggled(bool checked)
 {
     int RelayNum = 2;
-    localXbee->setRemoteRelay(remoteAddr, RelayNum, checked);
+    localXbee.setRemoteRelay(remoteAddr, RelayNum, checked);
     setIndicator(RelayNum, checked);
     console->putData("Relay", RelayNum, checked);
 }
@@ -324,7 +324,7 @@ void MainWindow::on_Relay2_toggled(bool checked)
 void MainWindow::on_Relay3_toggled(bool checked)
 {
     int RelayNum = 3;
-    localXbee->setRemoteRelay(remoteAddr, RelayNum, checked);
+    localXbee.setRemoteRelay(remoteAddr, RelayNum, checked);
     setIndicator(RelayNum, checked);
     console->putData("Relay", RelayNum, checked);
 }
@@ -332,7 +332,7 @@ void MainWindow::on_Relay3_toggled(bool checked)
 void MainWindow::on_Relay4_toggled(bool checked)
 {
     int RelayNum = 4;
-    localXbee->setRemoteRelay(remoteAddr, RelayNum, checked);
+    localXbee.setRemoteRelay(remoteAddr, RelayNum, checked);
     setIndicator(RelayNum, checked);
     console->putData("Relay", RelayNum, checked);
 }
@@ -362,31 +362,31 @@ void MainWindow::setIndicator(int RelayNum, bool status)
 // Toggled API's
 void MainWindow::on_LocalAPI_toggled(bool checked)
 {
-    localXbee->write("+++");
+    localXbee.write("+++");
     mdelay(300);
-    localXbee->write("ATAP");
+    localXbee.write("ATAP");
 
     if(checked)
-        localXbee->write("1\r");
+        localXbee.write("1\r");
     else
-        localXbee->write("0\r");
+        localXbee.write("0\r");
 
-    localXbee->write("ATWR\r");
-    localXbee->write("ATCN\r");
+    localXbee.write("ATWR\r");
+    localXbee.write("ATCN\r");
     mdelay(300);
     console->putData("LocalAPI", checked);
 }
 
 void MainWindow::on_RemoteAPI_toggled(bool checked)
 {
-    localXbee->setRemoteAPI(remoteAddr, checked);
+    localXbee.setRemoteAPI(remoteAddr, checked);
     console->putData("RemoteAPI", checked);
 }
 
 //Toggled Sleep
 void MainWindow::on_SleepButton_toggled(bool checked)
 {
-    localXbee->setSleep(remoteAddr, checked);
+    localXbee.setSleep(remoteAddr, checked);
     console->putData("Sleep", checked);
 }
 
@@ -398,12 +398,12 @@ void MainWindow::on_RefreshButton_clicked()
 
 void MainWindow::updateIndicators()
 {
-//    localXbee->clear();
+//    localXbee.clear();
 //    qDebug() << "Update Indicators";
-//    localXbee->getRemoteRelay(remoteAddr, 1);
-//    localXbee->getRemoteRelay(remoteAddr, 2);
-//    localXbee->getRemoteRelay(remoteAddr, 3);
-//    localXbee->getRemoteRelay(remoteAddr, 4);
+//    localXbee.getRemoteRelay(remoteAddr, 1);
+//    localXbee.getRemoteRelay(remoteAddr, 2);
+//    localXbee.getRemoteRelay(remoteAddr, 3);
+//    localXbee.getRemoteRelay(remoteAddr, 4);
 
 //    QByteArray data = readData();
 

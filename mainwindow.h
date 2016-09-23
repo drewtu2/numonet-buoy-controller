@@ -64,7 +64,7 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     Console *console;
-    AddressBook *address_book;
+    AddressBook address_book;
     ~MainWindow();
 
 
@@ -111,7 +111,7 @@ private:
     Ui::MainWindow *ui;
     QLabel *status;
     SettingsDialog *settings;
-    Xbee *localXbee;
+    Xbee localXbee;
     QString pathToAddressBook;
 };
 

@@ -1,6 +1,7 @@
 QT += core gui serialport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QMAKE_MAC_SDK = macosx10.12
 
 TARGET = NUMONET_Buoy_Controller
 TEMPLATE = app

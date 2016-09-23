@@ -77,38 +77,13 @@ void Xbee::setRemoteAPI(QByteArray remAddr, bool checked)
     remoteATcommand(remAddr, command ,parameter);
 }
 
-
 void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand, int parameter)
 {
     QByteArray num;
     num[0] = 0x7E; //Sentinel
     num[1] = 0x00; //LengthMSB
     num[2] = 0x10; //LengthLSB
-    num[3] = 0x17; //Message is AT Command
-    num[4] = 0x01;  //FrameID
-    for (int i = 0; i < 8; i++) //64Bit Address
-    {
-        num[5+i] = remAddr[i];
-    }                           //End 64Bit Address
-    num[13] = 0xFF; //Reserved
-    num[14] = 0xFE; //Reserved
-    num[15] = 0x02; //Remote Command Options 0x02 saves changes on exit
-    num[16] = ATCommand[0]; //AT Command Byte 1
-    num[17] = ATCommand[1],ATCommand[2]; //AT Command Byte 2
-    num[18] = parameter; //Command Parameter
-    num[19] = checkSum(num.mid(3));
 
-    //Write the command
-    write(num);
-    qDebug() << "Hex Cmd Sent: " << num << "\n";
-}
-
-void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
-{
-    QByteArray num;
-    num[0] = 0x7E; //Sentinel
-    num[1] = 0x00; //LengthMSB
-    num[2] = 0x0F; //LengthLSB
     num[3] = 0x17; //Message is AT Command
     num[4] = 0x01;  //FrameID
     for (int i = 0; i < 8; i++) //64Bit Address
@@ -120,7 +95,28 @@ void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
     num[15] = 0x02; //Remote Command Options 0x02 saves changes on exit
     num[16] = ATCommand[0]; //AT Command Byte 1
     num[17] = ATCommand[1]; //AT Command Byte 2
-    num[18] = checkSum(num.mid(3));
+    num[18] = parameter; //Command Parameter
+    num[19] = checkSum(num.mid(3));
+
+    //Write the command
+    write(num);
+    qDebug() << "Hex Cmd Sent: " << num << "\n";
+}
+
+void Xbee::remoteATcommand(QByteArray remAddr, QByteArray ATCommand)
+{
+    QByteArray num;
+    num[0] = k_sentinel; //Sentinel
+    num[1] = 0x00; //LengthMSB
+    num[2] = 0x0F; //LengthLSB
+    num[3] = k_typeRemoteAT; //Message is remote AT Command
+    num[4] = 0x01;  //FrameID
+    num.append(remAddr);
+    num.append(0xff); // reserved
+    num.append(0xfe); // reserved
+    num.append(k_typeRemoteAT_saveChanges); //Remote Command Options 0x02 saves changes on exit
+    num.append(ATCommand);
+    num.append(checkSum(num.mid(3)));
 
     //Write the command
     write(num);
